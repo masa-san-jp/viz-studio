@@ -109,6 +109,12 @@ function build(){clr();if(!ROWS.length)return;const m=M();
   root.add(line(new THREE.Vector3(X0,0,Z0),new THREE.Vector3(-X0,0,Z0)));  // X
   root.add(line(new THREE.Vector3(X0,0,Z0),new THREE.Vector3(X0,0,-Z0)));  // Z
   root.add(line(new THREE.Vector3(X0,0,Z0),new THREE.Vector3(X0,H,Z0)));   // Y
+  // full 3D box frame (立体を明示)
+  const bxMat=new THREE.LineBasicMaterial({color:0x4a5488,transparent:true,opacity:.55});
+  const X1=-X0,Z1=-Z0; const cs=[[X0,0,Z0,X1,0,Z0],[X1,0,Z0,X1,0,Z1],[X1,0,Z1,X0,0,Z1],[X0,0,Z1,X0,0,Z0],
+    [X0,H,Z0,X1,H,Z0],[X1,H,Z0,X1,H,Z1],[X1,H,Z1,X0,H,Z1],[X0,H,Z1,X0,H,Z0],
+    [X0,0,Z0,X0,H,Z0],[X1,0,Z0,X1,H,Z0],[X1,0,Z1,X1,H,Z1],[X0,0,Z1,X0,H,Z1]];
+  cs.forEach(c=>{const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(c[0],c[1],c[2]),new THREE.Vector3(c[3],c[4],c[5])]);root.add(new THREE.Line(g,bxMat));});
   // y ticks
   const tickMat=new THREE.LineBasicMaterial({color:0x3a4368});
   [0,0.5,1].forEach(f=>{const y=f*H;root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(X0,y,Z0),new THREE.Vector3(X0-6,y,Z0)]),tickMat));
@@ -121,18 +127,18 @@ function build(){clr();if(!ROWS.length)return;const m=M();
   const clusterN=Math.round(90+m.dens*380);
   function inBall(){let x,y,z;do{x=Math.random()*2-1;y=Math.random()*2-1;z=Math.random()*2-1;}while(x*x+y*y+z*z>1);return[x,y,z];}
   if(MODE==="points"){
-    const pos=[],col=[],stems=[];const R=8+m.dens*9;
+    const pos=[],col=[],stems=[];const R=5+m.dens*6;
     ROWS.forEach(r=>{const x=(nx.get(r)-0.5)*SPAN,z=nz?(nz.get(r)-0.5)*SPAN:0,y=ny.get(r)*H;
       const c=ramp(m.warm,cT(r));const b=0.9+m.drama*0.5;
-      for(let k=0;k<clusterN;k++){const s=inBall();const rr=Math.pow(Math.random(),0.6);
+      for(let k=0;k<clusterN;k++){const s=inBall();const rr=Math.pow(Math.random(),0.85);
         pos.push(x+s[0]*R*rr,y+s[1]*R*rr,z+s[2]*R*rr);const gg=0.45+Math.random()*0.7;
         col.push(c[0]/255*b*gg,c[1]/255*b*gg,c[2]/255*b*gg);}
       stems.push(x,0,z,x,y,z);});
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-    ptMat=new THREE.PointsMaterial({size:1.6+m.dens*2.4,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.9});
+    ptMat=new THREE.PointsMaterial({size:1.4+m.dens*2.0,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.85});
     root.add(new THREE.Points(g,ptMat));
     const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(stems,3));
-    root.add(new THREE.LineSegments(sg,new THREE.LineBasicMaterial({color:0x5566a0,transparent:true,opacity:.25})));
+    root.add(new THREE.LineSegments(sg,new THREE.LineBasicMaterial({color:0x9fb0ff,transparent:true,opacity:.5})));
   }else{
     const pos=[],col=[];const RR=3.4+m.dens*3.4;
     ROWS.forEach(r=>{const x=(nx.get(r)-0.5)*SPAN,z=nz?(nz.get(r)-0.5)*SPAN:0,h=Math.max(0.6,ny.get(r)*H);
@@ -153,9 +159,9 @@ function applyAir(m){const near=460-m.air*380,far=820-m.air*320;scene.fog.near=n
 let labEls=[];
 function buildLabelDom(){const box=$("labels");box.innerHTML="";labEls=LABELS.map(L=>{const d=document.createElement("div");d.className="lbl "+(L.c||"");d.textContent=L.t;box.appendChild(d);return d;});}
 // orbit
-let az=0.62,pol=1.02,rad=210,ty=H0(),drag=false,px=0,py=0,last=0;
+let az=0.62,pol=1.22,rad=245,ty=H0(),drag=false,px=0,py=0,last=0;
 function H0(){return 60;}
-function place(){camera.position.set(rad*Math.sin(pol)*Math.sin(az),ty+rad*Math.cos(pol),rad*Math.sin(pol)*Math.cos(az));camera.lookAt(0,ty*0.5,0);}
+function place(){camera.position.set(rad*Math.sin(pol)*Math.sin(az),ty+rad*Math.cos(pol),rad*Math.sin(pol)*Math.cos(az));camera.lookAt(0,58,0);}
 const el=renderer.domElement;
 el.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;last=performance.now();el.setPointerCapture(e.pointerId);});
 el.addEventListener('pointerup',()=>drag=false);
@@ -165,7 +171,7 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;const v3=new THREE.Vector3();
 function tick(t){requestAnimationFrame(tick);const e=+$("energy").value;
   if(!drag&&performance.now()-last>2200&&!reduce)az+=0.0008+e*0.005;
-  if(ptMat){const base=1.6+(+$("dens").value)*2.4;ptMat.size=base*(1+0.16*e*Math.sin(t*0.004));}
+  if(ptMat){const base=1.4+(+$("dens").value)*2.0;ptMat.size=base*(1+0.16*e*Math.sin(t*0.004));}
   place();
   for(let i=0;i<LABELS.length;i++){v3.copy(LABELS[i].p).project(camera);const e2=labEls[i];if(!e2)continue;
     if(v3.z<1){e2.style.display="block";e2.style.transform=`translate(-50%,-50%) translate(${(v3.x*.5+.5)*innerWidth}px,${(-v3.y*.5+.5)*innerHeight}px)`;}else e2.style.display="none";}
