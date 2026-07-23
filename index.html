@@ -3,42 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Viz Studio — データに、雰囲気を与える3Dグラフ</title>
+<title>Viz Studio — データを、ひとつのかたち（立体）に</title>
 <style>
   :root{--bg:#05060c;--panel:#0d1120ea;--ink:#edeaf6;--muted:#8f8ca6;--gold:#ffd08a;--line:#242a44;}
-  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;color:var(--ink);
-    font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;}
+  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;}
   canvas{display:block;position:fixed;inset:0;z-index:0;}
   #labels{position:fixed;inset:0;z-index:4;pointer-events:none;}
-  .lbl{position:absolute;top:0;left:0;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;
-    color:#cfc9e0;text-shadow:0 1px 8px #000c;}
-  .lbl.axis{color:var(--gold);font-weight:600;font-size:12px;letter-spacing:.03em;}
+  .lbl{position:absolute;top:0;left:0;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;color:#cfc9e0;text-shadow:0 1px 8px #000c;}
+  .lbl.axis{color:var(--gold);font-weight:600;font-size:12px;}
   .lbl.tick{color:#9a97ad;font-variant-numeric:tabular-nums;font-size:10.5px;}
-  #panel{position:fixed;top:16px;left:16px;z-index:10;width:300px;max-height:calc(100vh - 32px);overflow:auto;
-    background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;
-    padding:16px 16px 18px;box-shadow:0 10px 50px #000b;}
+  #panel{position:fixed;top:16px;left:16px;z-index:10;width:300px;max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:16px 16px 18px;box-shadow:0 10px 50px #000b;}
   h1{font-size:14px;margin:0;letter-spacing:.04em;font-weight:700;}
   .sub{font-size:10.5px;color:var(--muted);margin:3px 0 14px;line-height:1.5;}
-  .mood{margin:15px 0;}
-  .mood .lab{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
-  .mood .lab b{font-weight:600;}
+  .mood{margin:15px 0;}.mood .lab{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}.mood .lab b{font-weight:600;}
   .mood .ends{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);margin-top:2px;}
   input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:3px;background:linear-gradient(90deg,#2a3050,#5b4a86);outline:none;}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);border:2px solid #1a1408;cursor:pointer;box-shadow:0 0 10px #ffd08a66;}
-  .seg{display:flex;gap:6px;margin:6px 0 4px;}
-  .seg button{flex:1;cursor:pointer;background:#161b30;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px;font-size:12px;}
-  .seg button.on{background:var(--gold);color:#1a1408;border:none;font-weight:700;}
-  details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px;}
-  details summary{cursor:pointer;font-size:11px;color:var(--muted);}
+  .seg{display:flex;gap:6px;margin:6px 0 4px;}.seg button{flex:1;cursor:pointer;background:#161b30;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px;font-size:12px;}.seg button.on{background:var(--gold);color:#1a1408;border:none;font-weight:700;}
+  details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px;}details summary{cursor:pointer;font-size:11px;color:var(--muted);}
   textarea{width:100%;box-sizing:border-box;height:84px;margin-top:8px;background:#0a0d18;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,monospace;font-size:11px;}
-  .mini{font-size:10px;color:var(--muted);margin:8px 0 3px;}
-  select{width:100%;box-sizing:border-box;background:#0a0d18;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px;font-size:11px;}
-  .row{display:flex;gap:8px;}.row>div{flex:1;}
-  .btns{display:flex;gap:8px;margin-top:9px;}
-  .btns button{flex:1;cursor:pointer;border-radius:8px;padding:7px;font-size:12px;border:1px solid var(--line);background:#161b30;color:var(--ink);}
-  .btns button.primary{background:var(--gold);color:#1a1408;border:none;font-weight:700;}
-  #err{color:#ff9d8a;font-size:11px;margin-top:6px;}
-  #hint{position:fixed;right:16px;bottom:14px;z-index:5;color:var(--muted);font-size:11px;}
+  .mini{font-size:10px;color:var(--muted);margin:8px 0 3px;}select{width:100%;box-sizing:border-box;background:#0a0d18;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px;font-size:11px;}
+  .row{display:flex;gap:8px;}.row>div{flex:1;}.btns{display:flex;gap:8px;margin-top:9px;}.btns button{flex:1;cursor:pointer;border-radius:8px;padding:7px;font-size:12px;border:1px solid var(--line);background:#161b30;color:var(--ink);}.btns button.primary{background:var(--gold);color:#1a1408;border:none;font-weight:700;}
+  #err{color:#ff9d8a;font-size:11px;margin-top:6px;}#hint{position:fixed;right:16px;bottom:14px;z-index:5;color:var(--muted);font-size:11px;}
 </style>
 </head>
 <body>
@@ -46,13 +32,13 @@
 <div id="labels"></div>
 <div id="panel">
   <h1>Viz Studio</h1>
-  <div class="sub">データを3Dグラフに。気分のつまみで全体の空気がまとめて変わります。</div>
-  <div class="seg" id="mode"><button data-m="points" class="on">粒</button><button data-m="bars">柱</button></div>
+  <div class="sub">データを、粒で成形した"ひとつのかたち（立体）"に。気分のつまみで空気が変わります。</div>
+  <div class="seg" id="mode"><button data-m="surface" class="on">地形</button><button data-m="bars">柱</button></div>
   <div class="mood"><div class="lab"><b>温度</b></div><input type="range" id="warm" min="0" max="1" step="0.01" value="0.72"><div class="ends"><span>寒色・静謐</span><span>暖色・熱</span></div></div>
-  <div class="mood"><div class="lab"><b>ドラマ</b></div><input type="range" id="drama" min="0" max="1" step="0.01" value="0.5"><div class="ends"><span>穏やか・平坦</span><span>劇的・そそり立つ</span></div></div>
-  <div class="mood"><div class="lab"><b>エネルギー</b></div><input type="range" id="energy" min="0" max="1" step="0.01" value="0.3"><div class="ends"><span>静寂</span><span>躍動・鼓動</span></div></div>
+  <div class="mood"><div class="lab"><b>ドラマ</b></div><input type="range" id="drama" min="0" max="1" step="0.01" value="0.55"><div class="ends"><span>なだらか</span><span>険しい・そそり立つ</span></div></div>
+  <div class="mood"><div class="lab"><b>エネルギー</b></div><input type="range" id="energy" min="0" max="1" step="0.01" value="0.3"><div class="ends"><span>静止</span><span>うねる・脈動</span></div></div>
   <div class="mood"><div class="lab"><b>空気感</b></div><input type="range" id="air" min="0" max="1" step="0.01" value="0.25"><div class="ends"><span>澄んだ夜</span><span>霧・幻想</span></div></div>
-  <div class="mood"><div class="lab"><b>密度感</b></div><input type="range" id="dens" min="0" max="1" step="0.01" value="0.5"><div class="ends"><span>繊細</span><span>濃密・光の塊</span></div></div>
+  <div class="mood"><div class="lab"><b>密度感</b></div><input type="range" id="dens" min="0" max="1" step="0.01" value="0.55"><div class="ends"><span>粗い</span><span>緻密・光の膜</span></div></div>
   <details id="dbox"><summary>データと列（開いて差し替え）</summary>
     <textarea id="data" spellcheck="false" placeholder="CSV か JSON配列（1行目=見出し）"></textarea>
     <div class="btns"><button id="sample">サンプル</button><button id="apply" class="primary">反映</button></div>
@@ -65,122 +51,92 @@
 <script src="three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-let ROWS=[],COLS=[],MODE="points";
+let ROWS=[],COLS=[],MODE="surface";
 const COOL=[[16,22,54],[26,74,150],[40,150,190],[120,205,215],[224,244,255]];
 const WARM=[[38,24,66],[120,40,104],[214,72,46],[255,158,61],[255,232,178]];
 const mixStop=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
 function ramp(warm,t){const P=COOL.map((c,i)=>mixStop(c,WARM[i],warm));t=Math.max(0,Math.min(1,t));const f=t*(P.length-1),i=Math.floor(f),g=f-i;return mixStop(P[i],P[Math.min(i+1,P.length-1)],g);}
-function parse(txt){txt=txt.trim();if(!txt)throw"データが空です";
-  if(txt[0]==="["||txt[0]==="{"){let j=JSON.parse(txt);if(!Array.isArray(j))j=[j];if(!j.length)throw"空配列";
-    if(Array.isArray(j[0])){const cols=j[0].map((_,i)=>"c"+i);return{cols,rows:j.map(r=>{const o={};cols.forEach((c,i)=>o[c]=r[i]);return o;})};}
-    return{cols:Object.keys(j[0]),rows:j};}
-  const L=txt.split(/\r?\n/).filter(l=>l.trim());const cols=L[0].split(",").map(s=>s.trim());
-  const rows=L.slice(1).map(l=>{const p=l.split(",");const o={};cols.forEach((c,i)=>o[c]=(p[i]??"").trim());return o;});return{cols,rows};}
+function parse(txt){txt=txt.trim();if(!txt)throw"データが空です";if(txt[0]==="["||txt[0]==="{"){let j=JSON.parse(txt);if(!Array.isArray(j))j=[j];if(!j.length)throw"空配列";if(Array.isArray(j[0])){const cols=j[0].map((_,i)=>"c"+i);return{cols,rows:j.map(r=>{const o={};cols.forEach((c,i)=>o[c]=r[i]);return o;})};}return{cols:Object.keys(j[0]),rows:j};}const L=txt.split(/\r?\n/).filter(l=>l.trim());const cols=L[0].split(",").map(s=>s.trim());const rows=L.slice(1).map(l=>{const p=l.split(",");const o={};cols.forEach((c,i)=>o[c]=(p[i]??"").trim());return o;});return{cols,rows};}
 const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
-function fillSelects(){for(const id of["cx","cy","cz","cc"]){const s=$(id);s.innerHTML="";const n=document.createElement("option");n.value="";n.textContent="（なし）";s.appendChild(n);COLS.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;s.appendChild(o);});}
-  const nu=COLS.filter(c=>ROWS.some(r=>num(r[c])!==null));$("cx").value=COLS[0]||"";$("cy").value=nu[0]||COLS[1]||"";$("cz").value=nu[1]||"";$("cc").value=nu[0]||COLS[COLS.length-1]||"";}
+function fillSelects(){for(const id of["cx","cy","cz","cc"]){const s=$(id);s.innerHTML="";const n=document.createElement("option");n.value="";n.textContent="（なし）";s.appendChild(n);COLS.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;s.appendChild(o);});}const nu=COLS.filter(c=>ROWS.some(r=>num(r[c])!==null));$("cx").value=COLS[0]||"";$("cy").value=nu[0]||COLS[1]||"";$("cz").value=nu[1]||(COLS[2]||"");$("cc").value=nu[0]||COLS[COLS.length-1]||"";}
 function extent(col){const vs=ROWS.map(r=>num(r[col])).filter(v=>v!==null);if(!vs.length)return[0,1];return[Math.min(...vs),Math.max(...vs)];}
-function axisNorm(col){const nums=ROWS.map(r=>num(r[col]));if(nums.some(v=>v!==null)){const[mn,mx]=extent(col);return{mn,mx,cat:false,get:r=>{const v=num(r[col]);return v===null?0:(mx===mn?0.5:(v-mn)/(mx-mn));}};}const cats=[...new Set(ROWS.map(r=>r[col]))];return{mn:0,mx:Math.max(1,cats.length-1),cat:true,cats,get:r=>cats.length<2?0.5:cats.indexOf(r[col])/(cats.length-1)};}
+function axisNorm(col){const nums=ROWS.map(r=>num(r[col]));if(nums.some(v=>v!==null)){const[mn,mx]=extent(col);return{mn,mx,get:r=>{const v=num(r[col]);return v===null?0:(mx===mn?0.5:(v-mn)/(mx-mn));}};}const cats=[...new Set(ROWS.map(r=>r[col]))];return{mn:0,mx:Math.max(1,cats.length-1),get:r=>cats.length<2?0.5:cats.indexOf(r[col])/(cats.length-1)};}
 function colorT(col){const vs=ROWS.map(r=>num(r[col]));if(vs.every(v=>v===null)){const cats=[...new Set(ROWS.map(r=>r[col]))];return r=>cats.length<2?0.6:cats.indexOf(r[col])/(cats.length-1);}const[mn,mx]=extent(col);return r=>{const v=num(r[col]);return v===null?0.5:(mx===mn?0.5:(v-mn)/(mx-mn));};}
 
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
-const scene=new THREE.Scene();let BG=0x05060c;renderer.setClearColor(BG,1);scene.fog=new THREE.Fog(BG,320,720);
+const scene=new THREE.Scene();let BG=0x05060c;renderer.setClearColor(BG,1);scene.fog=new THREE.Fog(BG,340,760);
 const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,0.1,4000);
 const group=new THREE.Group();scene.add(group);
-scene.add(new THREE.AmbientLight(0x8494c4,0.7));const pl=new THREE.PointLight(0xfff0d6,0.8);pl.position.set(140,240,140);scene.add(pl);
-function dot(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const r=g.createRadialGradient(32,32,0,32,32,32);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(.32,'rgba(255,246,224,.85)');r.addColorStop(1,'rgba(255,226,182,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);}
+scene.add(new THREE.AmbientLight(0x8494c4,0.6));const pl=new THREE.PointLight(0xfff0d6,0.8);pl.position.set(140,260,140);scene.add(pl);
+function dot(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const r=g.createRadialGradient(32,32,0,32,32,32);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(.34,'rgba(255,246,224,.8)');r.addColorStop(1,'rgba(255,226,182,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);}
 const DOT=dot();
-const SPAN=200; const X0=-SPAN/2, Z0=-SPAN/2;
-let built=null,ptMat=null,LABELS=[];
-function clr(){if(built){group.remove(built);built.traverse(o=>{o.geometry&&o.geometry.dispose();o.material&&(Array.isArray(o.material)?o.material.forEach(m=>m.dispose()):o.material.dispose());});}built=null;ptMat=null;LABELS=[];}
+const SPAN=200,X0=-SPAN/2,Z0=-SPAN/2,X1=SPAN/2,Z1=SPAN/2;
+let built=null,ptMat=null,LABELS=[],curH=140,SURF=null;
+function clr(){if(built){group.remove(built);built.traverse(o=>{o.geometry&&o.geometry.dispose();o.material&&(Array.isArray(o.material)?o.material.forEach(m=>m.dispose()):o.material.dispose());});}built=null;ptMat=null;LABELS=[];SURF=null;}
 const M=()=>({warm:+$("warm").value,drama:+$("drama").value,energy:+$("energy").value,air:+$("air").value,dens:+$("dens").value});
 function fmt(v){if(Math.abs(v)>=10000)return Math.round(v).toLocaleString();return (Math.round(v*100)/100).toString();}
 
 function build(){clr();if(!ROWS.length)return;const m=M();
   const cx=$("cx").value,cy=$("cy").value,cz=$("cz").value,cc=$("cc").value;
   const nx=axisNorm(cx),ny=axisNorm(cy),nz=cz?axisNorm(cz):null,ct=colorT(cc);
-  const H=60+m.drama*160; const contrast=0.5+m.drama*0.9; const cT=r=>Math.pow(ct(r),1/contrast);
+  const H=70+m.drama*180;curH=H;const contrast=0.5+m.drama*0.9;
   const root=new THREE.Group();
-  // ---- floor grid ----
-  const grid=new THREE.GridHelper(SPAN,10,0x2a3358,0x151c30);grid.position.set(0,0,0);root.add(grid);
-  // ---- axes (L-frame at back-left corner) ----
-  const axCol=0x6b74a0; const axMat=new THREE.LineBasicMaterial({color:axCol,transparent:true,opacity:.9});
-  function line(a,b){const g=new THREE.BufferGeometry().setFromPoints([a,b]);return new THREE.Line(g,axMat);}
-  root.add(line(new THREE.Vector3(X0,0,Z0),new THREE.Vector3(-X0,0,Z0)));  // X
-  root.add(line(new THREE.Vector3(X0,0,Z0),new THREE.Vector3(X0,0,-Z0)));  // Z
-  root.add(line(new THREE.Vector3(X0,0,Z0),new THREE.Vector3(X0,H,Z0)));   // Y
-  // full 3D box frame (立体を明示)
-  const bxMat=new THREE.LineBasicMaterial({color:0x4a5488,transparent:true,opacity:.55});
-  const X1=-X0,Z1=-Z0; const cs=[[X0,0,Z0,X1,0,Z0],[X1,0,Z0,X1,0,Z1],[X1,0,Z1,X0,0,Z1],[X0,0,Z1,X0,0,Z0],
-    [X0,H,Z0,X1,H,Z0],[X1,H,Z0,X1,H,Z1],[X1,H,Z1,X0,H,Z1],[X0,H,Z1,X0,H,Z0],
-    [X0,0,Z0,X0,H,Z0],[X1,0,Z0,X1,H,Z0],[X1,0,Z1,X1,H,Z1],[X0,0,Z1,X0,H,Z1]];
-  cs.forEach(c=>{const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(c[0],c[1],c[2]),new THREE.Vector3(c[3],c[4],c[5])]);root.add(new THREE.Line(g,bxMat));});
-  // y ticks
-  const tickMat=new THREE.LineBasicMaterial({color:0x3a4368});
-  [0,0.5,1].forEach(f=>{const y=f*H;root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(X0,y,Z0),new THREE.Vector3(X0-6,y,Z0)]),tickMat));
-    LABELS.push({t:fmt(ny.mn+(ny.mx-ny.mn)*f),p:new THREE.Vector3(X0-14,y,Z0),c:"tick"});});
-  // axis names
-  LABELS.push({t:cx||"X",p:new THREE.Vector3(0,-8,Z0),c:"axis"});
-  if(cz)LABELS.push({t:cz,p:new THREE.Vector3(X0,-8,0),c:"axis"});
-  LABELS.push({t:(cy||"高さ"),p:new THREE.Vector3(X0-14,H+10,Z0),c:"axis"});
-  // ---- data ----
-  const clusterN=Math.round(90+m.dens*380);
-  function inBall(){let x,y,z;do{x=Math.random()*2-1;y=Math.random()*2-1;z=Math.random()*2-1;}while(x*x+y*y+z*z>1);return[x,y,z];}
-  if(MODE==="points"){
-    const pos=[],col=[],stems=[];const R=5+m.dens*6;
-    ROWS.forEach(r=>{const x=(nx.get(r)-0.5)*SPAN,z=nz?(nz.get(r)-0.5)*SPAN:0,y=ny.get(r)*H;
-      const c=ramp(m.warm,cT(r));const b=0.9+m.drama*0.5;
-      for(let k=0;k<clusterN;k++){const s=inBall();const rr=Math.pow(Math.random(),0.85);
-        pos.push(x+s[0]*R*rr,y+s[1]*R*rr,z+s[2]*R*rr);const gg=0.45+Math.random()*0.7;
-        col.push(c[0]/255*b*gg,c[1]/255*b*gg,c[2]/255*b*gg);}
-      stems.push(x,0,z,x,y,z);});
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-    ptMat=new THREE.PointsMaterial({size:1.4+m.dens*2.0,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.85});
+  // floor + full box + axes
+  root.add(new THREE.GridHelper(SPAN,10,0x2a3358,0x141b30));
+  const bxMat=new THREE.LineBasicMaterial({color:0x46507e,transparent:true,opacity:.5});
+  const eg=[[X0,0,Z0,X1,0,Z0],[X1,0,Z0,X1,0,Z1],[X1,0,Z1,X0,0,Z1],[X0,0,Z1,X0,0,Z0],[X0,H,Z0,X1,H,Z0],[X1,H,Z0,X1,H,Z1],[X1,H,Z1,X0,H,Z1],[X0,H,Z1,X0,H,Z0],[X0,0,Z0,X0,H,Z0],[X1,0,Z0,X1,H,Z0],[X1,0,Z1,X1,H,Z1],[X0,0,Z1,X0,H,Z1]];
+  eg.forEach(c=>root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(c[0],c[1],c[2]),new THREE.Vector3(c[3],c[4],c[5])]),bxMat)));
+  [0,0.5,1].forEach(f=>LABELS.push({t:fmt(ny.mn+(ny.mx-ny.mn)*f),p:new THREE.Vector3(X0-14,f*H,Z0),c:"tick"}));
+  LABELS.push({t:cx||"X",p:new THREE.Vector3(0,-8,Z0),c:"axis"});if(cz)LABELS.push({t:cz,p:new THREE.Vector3(X0,-8,0),c:"axis"});LABELS.push({t:(cy||"高さ"),p:new THREE.Vector3(X0-14,H+12,Z0),c:"axis"});
+
+  if(MODE==="surface"){
+    // data anchors in (u,v,h); build a continuous height-field terrain of particles (IDW)
+    const A=ROWS.map(r=>({u:nx.get(r),v:nz?nz.get(r):0.5,h:ny.get(r)}));
+    const G=Math.round(40+m.dens*80);const pos=new Float32Array(G*G*3),col=new Float32Array(G*G*3),phase=new Float32Array(G*G);
+    let k=0;
+    for(let i=0;i<G;i++)for(let j=0;j<G;j++){const u=i/(G-1),v=j/(G-1);
+      let sw=0,sh=0;for(const a of A){const d=(u-a.u)*(u-a.u)+(v-a.v)*(v-a.v)+0.0009;const w=1/(d*d);sw+=w;sh+=w*a.h;}
+      const hv=sh/sw;const x=(u-0.5)*SPAN,z=(v-0.5)*SPAN,y=hv*H;
+      pos[k*3]=x;pos[k*3+1]=y;pos[k*3+2]=z;phase[k]=(u+v)*7;
+      const c=ramp(m.warm,Math.pow(hv,1/contrast));const b=0.7+m.drama*0.55;
+      col[k*3]=c[0]/255*b;col[k*3+1]=c[1]/255*b;col[k*3+2]=c[2]/255*b;k++;}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+    ptMat=new THREE.PointsMaterial({size:1.4+m.dens*2.2,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.9});
     root.add(new THREE.Points(g,ptMat));
-    const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(stems,3));
-    root.add(new THREE.LineSegments(sg,new THREE.LineBasicMaterial({color:0x9fb0ff,transparent:true,opacity:.5})));
+    SURF={attr:g.getAttribute('position'),baseY:Float32Array.from(pos.filter((_,i)=>i%3===1)),phase,n:G*G};
   }else{
-    const pos=[],col=[];const RR=3.4+m.dens*3.4;
+    // particle pillars (solid columns = 立体)
+    const pos=[],col=[];const RR=3.6+m.dens*3.6;
     ROWS.forEach(r=>{const x=(nx.get(r)-0.5)*SPAN,z=nz?(nz.get(r)-0.5)*SPAN:0,h=Math.max(0.6,ny.get(r)*H);
-      const c=ramp(m.warm,cT(r));const b=0.9+m.drama*0.5;const N2=Math.round(60+m.dens*300);
-      for(let k=0;k<N2;k++){const a=Math.random()*6.2832,rad=Math.sqrt(Math.random())*RR,yy=Math.random()*h;
-        pos.push(x+Math.cos(a)*rad,yy,z+Math.sin(a)*rad);const gg=0.45+Math.random()*0.7;
-        col.push(c[0]/255*b*gg,c[1]/255*b*gg,c[2]/255*b*gg);}});
+      const c=ramp(m.warm,Math.pow(ct(r),1/contrast));const b=0.9+m.drama*0.5;const N2=Math.round(80+m.dens*340);
+      for(let q=0;q<N2;q++){const a=Math.random()*6.2832,rad=Math.sqrt(Math.random())*RR,yy=Math.random()*h;pos.push(x+Math.cos(a)*rad,yy,z+Math.sin(a)*rad);const gg=0.5+Math.random()*0.6;col.push(c[0]/255*b*gg,c[1]/255*b*gg,c[2]/255*b*gg);}});
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-    ptMat=new THREE.PointsMaterial({size:1.6+m.dens*2.4,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.92});
+    ptMat=new THREE.PointsMaterial({size:1.5+m.dens*2.2,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.92});
     root.add(new THREE.Points(g,ptMat));
   }
-  built=root;group.add(root);
-  buildLabelDom();applyAir(m);
+  built=root;group.add(root);buildLabelDom();applyAir(m);
 }
-function applyAir(m){const near=460-m.air*380,far=820-m.air*320;scene.fog.near=near;scene.fog.far=far;
-  const bg=[Math.round(5+9*m.air),Math.round(6+6*m.air),Math.round(12+14*m.air)];BG=(bg[0]<<16)|(bg[1]<<8)|bg[2];renderer.setClearColor(BG,1);scene.fog.color.setHex(BG);}
-// label dom
-let labEls=[];
-function buildLabelDom(){const box=$("labels");box.innerHTML="";labEls=LABELS.map(L=>{const d=document.createElement("div");d.className="lbl "+(L.c||"");d.textContent=L.t;box.appendChild(d);return d;});}
-// orbit
-let az=0.62,pol=1.22,rad=245,ty=H0(),drag=false,px=0,py=0,last=0;
-function H0(){return 60;}
-function place(){camera.position.set(rad*Math.sin(pol)*Math.sin(az),ty+rad*Math.cos(pol),rad*Math.sin(pol)*Math.cos(az));camera.lookAt(0,58,0);}
+function applyAir(m){scene.fog.near=480-m.air*400;scene.fog.far=840-m.air*340;const bg=[Math.round(5+9*m.air),Math.round(6+6*m.air),Math.round(12+14*m.air)];BG=(bg[0]<<16)|(bg[1]<<8)|bg[2];renderer.setClearColor(BG,1);scene.fog.color.setHex(BG);}
+let labEls=[];function buildLabelDom(){const b=$("labels");b.innerHTML="";labEls=LABELS.map(L=>{const d=document.createElement("div");d.className="lbl "+(L.c||"");d.textContent=L.t;b.appendChild(d);return d;});}
+let az=0.62,pol=1.24,rad=255,drag=false,px=0,py=0,last=0;
+function place(){camera.position.set(rad*Math.sin(pol)*Math.sin(az),curH*0.5+rad*Math.cos(pol),rad*Math.sin(pol)*Math.cos(az));camera.lookAt(0,curH*0.45,0);}
 const el=renderer.domElement;
 el.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;last=performance.now();el.setPointerCapture(e.pointerId);});
 el.addEventListener('pointerup',()=>drag=false);
-el.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-px)*0.005;pol=Math.max(0.15,Math.min(1.5,pol-(e.clientY-py)*0.004));px=e.clientX;py=e.clientY;last=performance.now();});
-el.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(90,Math.min(900,rad+e.deltaY*0.5));last=performance.now();},{passive:false});
+el.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-px)*0.005;pol=Math.max(0.15,Math.min(1.52,pol-(e.clientY-py)*0.004));px=e.clientX;py=e.clientY;last=performance.now();});
+el.addEventListener('wheel',e=>{e.preventDefault();rad=Math.max(100,Math.min(950,rad+e.deltaY*0.5));last=performance.now();},{passive:false});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;const v3=new THREE.Vector3();
-function tick(t){requestAnimationFrame(tick);const e=+$("energy").value;
-  if(!drag&&performance.now()-last>2200&&!reduce)az+=0.0008+e*0.005;
-  if(ptMat){const base=1.4+(+$("dens").value)*2.0;ptMat.size=base*(1+0.16*e*Math.sin(t*0.004));}
+function tick(t){requestAnimationFrame(tick);const en=+$("energy").value;
+  if(!drag&&performance.now()-last>2200&&!reduce)az+=0.0007+en*0.004;
+  if(SURF&&en>0.001&&!reduce){const a=SURF.attr,amp=curH*0.05*en;for(let i=0;i<SURF.n;i++){a.array[i*3+1]=SURF.baseY[i]+Math.sin(t*0.0016+SURF.phase[i])*amp;}a.needsUpdate=true;}
   place();
-  for(let i=0;i<LABELS.length;i++){v3.copy(LABELS[i].p).project(camera);const e2=labEls[i];if(!e2)continue;
-    if(v3.z<1){e2.style.display="block";e2.style.transform=`translate(-50%,-50%) translate(${(v3.x*.5+.5)*innerWidth}px,${(-v3.y*.5+.5)*innerHeight}px)`;}else e2.style.display="none";}
+  for(let i=0;i<LABELS.length;i++){v3.copy(LABELS[i].p).project(camera);const e2=labEls[i];if(!e2)continue;if(v3.z<1){e2.style.display="block";e2.style.transform=`translate(-50%,-50%) translate(${(v3.x*.5+.5)*innerWidth}px,${(-v3.y*.5+.5)*innerHeight}px)`;}else e2.style.display="none";}
   renderer.render(scene,camera);}
 requestAnimationFrame(tick);
 function applyData(){try{$("err").textContent="";const {cols,rows}=parse($("data").value);COLS=cols;ROWS=rows;fillSelects();build();}catch(e){$("err").textContent="読み込めません："+e;}}
 $("apply").onclick=applyData;
-$("sample").onclick=()=>{const R=["month,sales,region,growth"];const base=[120,140,135,160,190,175,210,230,205,250,280,300];
-  base.forEach((v,i)=>R.push(`M${i+1},${v},${i%3},${Math.round((v-base[Math.max(0,i-1)])*10)/10}`));$("data").value=R.join("\n");applyData();};
+$("sample").onclick=()=>{const R=["month,sales,region,growth"];const base=[120,140,135,160,190,175,210,230,205,250,280,300];base.forEach((v,i)=>{[0,1,2].forEach(rg=>{const vv=Math.round(v*(0.7+rg*0.22)); R.push(`M${i+1},${vv},R${rg},${Math.round((v-base[Math.max(0,i-1)])*10)/10}`);});});$("data").value=R.join("\n");applyData();};
 ["cx","cy","cz","cc"].forEach(id=>$(id).onchange=build);["warm","drama","dens"].forEach(id=>$(id).oninput=build);$("air").oninput=()=>applyAir(M());
 document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#mode button").forEach(x=>x.classList.remove("on"));b.classList.add("on");MODE=b.dataset.m;build();});
 $("sample").click();
