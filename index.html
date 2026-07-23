@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Viz Studio — 読める3Dグラフ</title>
 <style>
   :root{--bg:#080a12;--panel:#0f1424ee;--ink:#f2f0fa;--muted:#a6a3bd;--gold:#ffd08a;--line:#2b3352;}
@@ -14,6 +14,12 @@
   .lbl.tick{color:#c8c4dc;font-variant-numeric:tabular-nums;font-size:11px;}
   .lbl.cat{color:#d8d4ea;font-size:10.5px;}
   .lbl.val{color:#fff;font-size:10.5px;font-variant-numeric:tabular-nums;font-weight:600;}
+  body.light{background:#eef1f6;}
+  body.light .lbl{text-shadow:0 1px 2px #fff,0 0 3px #fff;}
+  body.light .lbl.tick{color:#5a5f70;}
+  body.light .lbl.cat{color:#2a2f3a;}
+  body.light .lbl.val{color:#111;}
+  body.light .lbl.axis{color:#7a5210;}
   #panel{position:fixed;top:16px;left:16px;z-index:10;width:296px;max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:16px 16px 18px;box-shadow:0 10px 50px #000b;}
   h1{font-size:14px;margin:0;font-weight:700;}.sub{font-size:10.5px;color:var(--muted);margin:3px 0 14px;line-height:1.5;}
   .mood{margin:14px 0;}.mood .lab{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}.mood .lab b{font-weight:600;}
@@ -37,6 +43,9 @@
   <div class="sub">読める3Dグラフ。壁の方眼と目盛りで値が読めます。気分のつまみで雰囲気を調整。</div>
   <div class="seg" id="mode"><button data-m="bars" class="on">棒</button><button data-m="surface">地形</button></div>
   <label class="chk"><input type="checkbox" id="showval" checked> 棒の先に数値を表示</label>
+  <div class="mini" style="margin-top:12px">背景（スライドに合わせる）</div>
+  <div class="seg" id="bg"><button data-b="dark" class="on">黒</button><button data-b="light">白</button><button data-b="alpha">透過</button></div>
+  <button id="save" class="primary" style="width:100%;margin-top:9px;cursor:pointer;border:none;border-radius:9px;padding:9px;font-size:12.5px;font-weight:700;">画像を保存（PNG）</button>
   <div class="mood"><div class="lab"><b>温度</b></div><input type="range" id="warm" min="0" max="1" step="0.01" value="0.7"><div class="ends"><span>寒色</span><span>暖色</span></div></div>
   <div class="mood"><div class="lab"><b>ドラマ</b></div><input type="range" id="drama" min="0" max="1" step="0.01" value="0.5"><div class="ends"><span>低い</span><span>高く強調</span></div></div>
   <div class="mood"><div class="lab"><b>エネルギー</b></div><input type="range" id="energy" min="0" max="1" step="0.01" value="0.15"><div class="ends"><span>静止</span><span>ゆっくり回る</span></div></div>
@@ -51,14 +60,15 @@
   </details>
 </div>
 <div id="hint">ドラッグ=回転 / ホイール=拡大</div>
-<script src="three.min.js"></script>
+<script src="./three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-let ROWS=[],COLS=[],MODE="bars";
+let ROWS=[],COLS=[],MODE="bars",LIGHT=false,BGMODE="dark";
 const COOL=[[16,22,54],[26,74,150],[40,150,190],[120,205,215],[224,244,255]];
 const WARM=[[38,24,66],[120,40,104],[214,72,46],[255,158,61],[255,232,178]];
 const mixStop=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
-function ramp(warm,t){const P=COOL.map((c,i)=>mixStop(c,WARM[i],warm));t=Math.max(0,Math.min(1,t));const f=t*(P.length-1),i=Math.floor(f),g=f-i;return mixStop(P[i],P[Math.min(i+1,P.length-1)],g);}
+const LCOOL=[[30,70,160],[40,110,190],[70,150,170],[150,120,60],[200,60,50]];const LWARM=[[20,60,170],[110,60,160],[190,60,120],[220,90,40],[190,30,40]];
+function ramp(warm,t){const CA=LIGHT?LCOOL:COOL,CB=LIGHT?LWARM:WARM;const P=CA.map((c,i)=>mixStop(c,CB[i],warm));t=Math.max(0,Math.min(1,t));const f=t*(P.length-1),i=Math.floor(f),g=f-i;return mixStop(P[i],P[Math.min(i+1,P.length-1)],g);}
 function parse(txt){txt=txt.trim();if(!txt)throw"データが空です";if(txt[0]==="["||txt[0]==="{"){let j=JSON.parse(txt);if(!Array.isArray(j))j=[j];if(!j.length)throw"空配列";if(Array.isArray(j[0])){const cols=j[0].map((_,i)=>"c"+i);return{cols,rows:j.map(r=>{const o={};cols.forEach((c,i)=>o[c]=r[i]);return o;})};}return{cols:Object.keys(j[0]),rows:j};}const L=txt.split(/\r?\n/).filter(l=>l.trim());const cols=L[0].split(",").map(s=>s.trim());const rows=L.slice(1).map(l=>{const p=l.split(",");const o={};cols.forEach((c,i)=>o[c]=(p[i]??"").trim());return o;});return{cols,rows};}
 const num=v=>{const t=(""+v).trim();return /^-?\d+(?:\.\d+)?$/.test(t)?parseFloat(t):null;};
 function fillSelects(){for(const id of["cx","cy","cz","cc"]){const s=$(id);s.innerHTML="";const n=document.createElement("option");n.value="";n.textContent="（なし）";s.appendChild(n);COLS.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;s.appendChild(o);});}const nu=COLS.filter(c=>ROWS.some(r=>num(r[c])!==null));$("cx").value=COLS[0]||"";$("cy").value=nu[0]||COLS[1]||"";$("cz").value=(COLS.find(c=>c!==$("cx").value&&!nu.includes(c)))||nu[1]||"";$("cc").value=nu[0]||COLS[COLS.length-1]||"";}
@@ -68,11 +78,11 @@ function isNum(col){return ROWS.some(r=>num(r[col])!==null);}
 function pos1(col,r){if(isNum(col)){const[mn,mx]=extent(col);const v=num(r[col]);return v===null?0.5:(mx===mn?0.5:(v-mn)/(mx-mn));}const cs=cats(col);return cs.length<2?0.5:cs.indexOf(r[col])/(cs.length-1);}
 function colorT(col){if(!isNum(col)){const cs=cats(col);return r=>cs.length<2?0.6:cs.indexOf(r[col])/(cs.length-1);}const[mn,mx]=extent(col);return r=>{const v=num(r[col]);return v===null?0.5:(mx===mn?0.5:(v-mn)/(mx-mn));};}
 
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);
 const scene=new THREE.Scene();let BG=0x080a12;renderer.setClearColor(BG,1);scene.fog=new THREE.Fog(BG,520,900);
 const camera=new THREE.PerspectiveCamera(44,innerWidth/innerHeight,0.1,4000);
 const group=new THREE.Group();scene.add(group);
-scene.add(new THREE.AmbientLight(0xa6b2dc,0.9));const pl=new THREE.DirectionalLight(0xffffff,0.9);pl.position.set(120,260,160);scene.add(pl);const pl2=new THREE.DirectionalLight(0x8fa0ff,0.4);pl2.position.set(-140,120,-120);scene.add(pl2);
+scene.add(new THREE.AmbientLight(0xffffff,LIGHT?1.05:0.9));const pl=new THREE.DirectionalLight(0xffffff,0.9);pl.position.set(120,260,160);scene.add(pl);const pl2=new THREE.DirectionalLight(0x8fa0ff,0.4);pl2.position.set(-140,120,-120);scene.add(pl2);
 function dot(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const r=g.createRadialGradient(32,32,0,32,32,32);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(.35,'rgba(255,246,224,.8)');r.addColorStop(1,'rgba(255,226,182,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);}
 const DOT=dot();
 const SPAN=200,X0=-SPAN/2,Z0=-SPAN/2,X1=SPAN/2,Z1=SPAN/2;
@@ -81,8 +91,8 @@ function clr(){if(built){group.remove(built);built.traverse(o=>{o.geometry&&o.ge
 const M=()=>({warm:+$("warm").value,drama:+$("drama").value,energy:+$("energy").value,air:+$("air").value,glow:+$("glow").value});
 function fmt(v){if(Math.abs(v)>=10000)return Math.round(v).toLocaleString();return (Math.round(v*100)/100).toString();}
 function walls(H,ny,cx,cz){const root=new THREE.Group();
-  const gm=new THREE.LineBasicMaterial({color:0x33406a,transparent:true,opacity:.85});
-  const gm2=new THREE.LineBasicMaterial({color:0x232c4a,transparent:true,opacity:.7});
+  const gm=new THREE.LineBasicMaterial({color:LIGHT?0x99a2c0:0x33406a,transparent:true,opacity:.85});
+  const gm2=new THREE.LineBasicMaterial({color:LIGHT?0xcfd4e6:0x232c4a,transparent:true,opacity:.7});
   function L(a,b,m){root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),m));}
   // horizontal gridlines on back wall (z=Z0) and left wall (x=X0) at 5 levels
   for(let i=0;i<=5;i++){const y=H*i/5;L(new THREE.Vector3(X0,y,Z0),new THREE.Vector3(X1,y,Z0),gm2);L(new THREE.Vector3(X0,y,Z0),new THREE.Vector3(X0,y,Z1),gm2);
@@ -109,7 +119,7 @@ function build(){clr();if(!ROWS.length)return;const m=M();
     ROWS.forEach(r=>{const x=xpos(r),z=zpos(r);const[mn,mx]=extent(cy);const v=num(r[cy]);const hv=v===null?0:(mx===mn?0.5:(v-mn)/(mx-mn));const h=Math.max(1.5,hv*H);
       const c=ramp(m.warm,ct(r));const col=new THREE.Color(c[0]/255,c[1]/255,c[2]/255);
       const box=new THREE.BoxGeometry(bw,h,bd);box.translate(x,h/2,z);
-      const mat=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.12+m.glow*0.9,roughness:0.35,metalness:0.15});
+      const mat=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:LIGHT?0:(0.12+m.glow*0.9),roughness:LIGHT?0.9:0.35,metalness:LIGHT?0:0.15});
       root.add(new THREE.Mesh(box,mat));
       if(xN&&!seenX[r[cx]]){seenX[r[cx]]=1;LABELS.push({t:r[cx],p:new THREE.Vector3(x,-9,Z1),c:"cat"});}
       if(showVal&&v!==null&&ROWS.length<=42)LABELS.push({t:fmt(v),p:new THREE.Vector3(x,h+8,z),c:"val"});});
@@ -121,7 +131,7 @@ function build(){clr();if(!ROWS.length)return;const m=M();
     ptMat=new THREE.PointsMaterial({size:2.4,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.95});
     root.add(new THREE.Points(g,ptMat));SURF={attr:g.getAttribute('position'),baseY:Float32Array.from(pos.filter((_,i)=>i%3===1)),phase,n:G*G};
   }
-  built=root;group.add(root);buildLabelDom();applyAir(m);
+  built=root;group.add(root);buildLabelDom();applyBg();
 }
 function applyAir(m){scene.fog.near=560-m.air*380;scene.fog.far=920-m.air*300;const bg=[Math.round(8+8*m.air),Math.round(10+6*m.air),Math.round(18+12*m.air)];BG=(bg[0]<<16)|(bg[1]<<8)|bg[2];renderer.setClearColor(BG,1);scene.fog.color.setHex(BG);}
 let labEls=[];function buildLabelDom(){const b=$("labels");b.innerHTML="";labEls=LABELS.map(L=>{const d=document.createElement("div");d.className="lbl "+(L.c||"");d.textContent=L.t;b.appendChild(d);return d;});}
@@ -144,9 +154,31 @@ requestAnimationFrame(tick);
 function applyData(){try{$("err").textContent="";const {cols,rows}=parse($("data").value);COLS=cols;ROWS=rows;fillSelects();build();}catch(e){$("err").textContent="読み込めません："+e;}}
 $("apply").onclick=applyData;
 $("sample").onclick=()=>{const R=["month,sales,region"];const base=[120,140,135,160,190,175,210,230,205,250,280,300];base.forEach((v,i)=>{["東","西","南"].forEach((rg,g)=>R.push(`${i+1}月,${Math.round(v*(0.72+g*0.2))},${rg}`));});$("data").value=R.join("\n");applyData();};
-["cx","cy","cz","cc"].forEach(id=>$(id).onchange=build);["warm","drama","glow"].forEach(id=>$(id).oninput=build);$("air").oninput=()=>applyAir(M());$("showval").onchange=build;
+["cx","cy","cz","cc"].forEach(id=>$(id).onchange=build);["warm","drama","glow"].forEach(id=>$(id).oninput=build);$("air").oninput=()=>{if(BGMODE==="dark")applyAir(M());};$("showval").onchange=build;
+function applyBg(){LIGHT=(BGMODE!=="dark");document.body.classList.toggle("light",LIGHT);
+  if(BGMODE==="dark"){applyAir(M());}
+  else{scene.fog.near=9000;scene.fog.far=9999;renderer.setClearColor(BGMODE==="alpha"?0x000000:0xffffff,BGMODE==="alpha"?0:1);}}
+function labStyle(cls){if(cls==="axis")return{f:"700 13px",c:LIGHT?"#7a5210":"#ffd08a"};if(cls==="val")return{f:"600 10.5px",c:LIGHT?"#111":"#ffffff"};if(cls==="tick")return{f:"400 11px",c:LIGHT?"#5a5f70":"#c8c4dc"};return{f:"400 10.5px",c:LIGHT?"#2a2f3a":"#d8d4ea"};}
+function exportPNG(){try{$("err").textContent="";renderer.render(scene,camera);
+  const gl=renderer.domElement,w=gl.width,h=gl.height,dpr=w/innerWidth;
+  const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");
+  if(BGMODE==="light"){g.fillStyle="#ffffff";g.fillRect(0,0,w,h);}
+  else if(BGMODE==="dark"){g.fillStyle="#"+(BG>>>0).toString(16).padStart(6,"0").slice(-6);g.fillRect(0,0,w,h);}
+  g.drawImage(gl,0,0,w,h);
+  g.textAlign="center";g.textBaseline="middle";
+  for(let i=0;i<LABELS.length;i++){const e=labEls[i];if(!e||e.style.display==="none")continue;
+    v3.copy(LABELS[i].p).project(camera);if(v3.z>=1)continue;
+    const X=(v3.x*.5+.5)*w,Y=(-v3.y*.5+.5)*h,st=labStyle(LABELS[i].c);
+    g.font=st.f.replace(/(\d+(?:\.\d+)?)px/,(m,n)=>(parseFloat(n)*dpr)+"px")+' "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif';
+    g.lineWidth=3*dpr;g.lineJoin="round";g.strokeStyle=LIGHT?"rgba(255,255,255,.92)":"rgba(0,0,0,.85)";g.strokeText(e.textContent,X,Y);
+    g.fillStyle=st.c;g.fillText(e.textContent,X,Y);}
+  const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="viz-studio.png";a.click();
+}catch(err){$("err").textContent="保存に失敗："+err;}}
+document.querySelectorAll("#bg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#bg button").forEach(x=>x.classList.remove("on"));b.classList.add("on");BGMODE=b.dataset.b;applyBg();build();});
+$("save").onclick=exportPNG;
 document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#mode button").forEach(x=>x.classList.remove("on"));b.classList.add("on");MODE=b.dataset.m;build();});
 $("sample").click();
+{const _b=new URLSearchParams(location.search).get("bg");if(_b&&["dark","light","alpha"].includes(_b))document.querySelector('#bg button[data-b="'+_b+'"]').click();}
 </script>
 
 </body>
