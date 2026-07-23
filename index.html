@@ -129,9 +129,9 @@ function build(){clearBuilt();if(!ROWS.length)return;const m=M();
   const cT=r=>{let t=ct(r);return Math.pow(t,1/contrast);};
   if(MODE==="points"){const pos=[],col=[];
     ROWS.forEach(r=>{const x=(nx.get(r)-0.5)*SPAN,z=cz?(nz.get(r)-0.5)*SPAN:0,y=ny.get(r)*H;
-      pos.push(x,y,z);const c=ramp(m.warm,cT(r));const b=0.55+m.drama*0.6;col.push(c[0]/255*b,c[1]/255*b,c[2]/255*b);});
+      pos.push(x,y,z);const c=ramp(m.warm,cT(r));const b=0.9+m.drama*0.5;col.push(c[0]/255*b,c[1]/255*b,c[2]/255*b);});
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-    ptMat=new THREE.PointsMaterial({size:2+m.dens*9,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.6+m.dens*0.4});
+    ptMat=new THREE.PointsMaterial({size:6+m.dens*22,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true,opacity:0.8+m.dens*0.2});
     built=new THREE.Points(g,ptMat);group.add(built);
   }else{const gp=new THREE.Group();
     ROWS.forEach(r=>{const x=(nx.get(r)-0.5)*SPAN,z=cz?(nz.get(r)-0.5)*SPAN:0,h=Math.max(0.6,ny.get(r)*H);
@@ -147,7 +147,7 @@ function applyAir(m){ // 空気感→fog & bg tone
   BG=(bg[0]<<16)|(bg[1]<<8)|bg[2];renderer.setClearColor(BG,1);scene.fog.color.setHex(BG);
 }
 // orbit
-let az=0.6,pol=1.0,rad=250,ty=24,drag=false,px=0,py=0,last=0;
+let az=0.6,pol=1.0,rad=175,ty=26,drag=false,px=0,py=0,last=0;
 function place(){camera.position.set(rad*Math.sin(pol)*Math.sin(az),ty+rad*Math.cos(pol),rad*Math.sin(pol)*Math.cos(az));camera.lookAt(0,ty,0);}
 const el=renderer.domElement;
 el.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;last=performance.now();el.setPointerCapture(e.pointerId);});
@@ -158,13 +158,13 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function tick(t){requestAnimationFrame(tick);const e=+$("energy").value;
   if(!drag&&performance.now()-last>2200&&!reduce)az+=0.0009+e*0.006;               // エネルギー→回転
-  if(ptMat){const base=2+(+$("dens").value)*9;ptMat.size=base*(1+0.18*e*Math.sin(t*0.004));} // →鼓動
+  if(ptMat){const base=6+(+$("dens").value)*22;ptMat.size=base*(1+0.18*e*Math.sin(t*0.004));} // →鼓動
   place();renderer.render(scene,camera);}
 requestAnimationFrame(tick);
 // UI
 function applyData(){try{$("err").textContent="";const {cols,rows}=parse($("data").value);COLS=cols;ROWS=rows;fillSelects();build();}catch(e){$("err").textContent="読み込めません："+e;}}
 $("apply").onclick=applyData;
-$("sample").onclick=()=>{$("data").value="region,population,area,age\nChiyoda,66670,12,48\nShinjuku,361787,18,44\nSetagaya,959397,58,45\nToshima,307015,13,43\nMinato,273125,20,46\nEdogawa,709372,50,45\nNerima,764094,48,46\nOta,762357,60,47\nItabashi,598863,32,45\nKoto,554093,42,44";applyData();};
+$("sample").onclick=()=>{$("data").value="region,x,value,z\nc0,0,30,0\nc1,0,40,1\nc2,0,50,2\nc3,0,60,3\nc4,0,30,4\nc5,0,40,5\nc6,1,110,0\nc7,1,103,1\nc8,1,71,2\nc9,1,65,3\nc10,1,106,4\nc11,1,116,5\nc12,2,137,0\nc13,2,127,1\nc14,2,44,2\nc15,2,84,3\nc16,2,132,4\nc17,2,142,5\nc18,3,98,0\nc19,3,59,1\nc20,3,46,2\nc21,3,69,3\nc22,3,96,4\nc23,3,66,5\nc24,4,69,0\nc25,4,70,1\nc26,4,56,2\nc27,4,80,3\nc28,4,67,4\nc29,4,77,5\nc30,5,127,0\nc31,5,117,1\nc32,5,74,2\nc33,5,74,3\nc34,5,122,4\nc35,5,132,5";applyData();};
 ["cx","cy","cz","cc"].forEach(id=>$(id).onchange=build);
 ["warm","drama","dens"].forEach(id=>$(id).oninput=build);
 $("air").oninput=()=>applyAir(M());
